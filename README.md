@@ -19,7 +19,7 @@ Projetract 是一个零依赖、零构建的单页 Web App。它把 GitHub 上�
 - **项目卡片** — 12 周提交柱、连续活跃周、语言、最后一次心跳，一屏读完。
 - **详情抽屉** — 26 周提交热图、语言构成、Open Issues / PRs、项目档案和同步入口。
 - **接入方式** — 粘贴 `owner/repo`，或者扫描一个 GitHub 用户名的公开仓库。
-- **两份主题** — 纸感日间与夜间值守，随你喜欢。
+- **浅色 / 深色两套主题** — 白天清澈的蓝，晚上安静的海军蓝。
 - **本地优先** — 首屏用内嵌快照，不需要网络；数据只存在你的浏览器里。
 
 ![详情抽屉](docs/preview-detail.jpg)
@@ -119,7 +119,8 @@ node scripts/build-seed.mjs lulgabc --months=24
 
 - **单页静态应用**：HTML + CSS + 原生 JavaScript，零运行时依赖、零构建。
 - **图表**：SVG / CSS 手绘，没有图表库。
-- **字体**：Instrument Serif + IBM Plex Mono（Google Fonts），中文回退到系统宋体 / 苹方。断网时仍然可用。
+- **字体**：Plus Jakarta Sans + Space Grotesk（Google Fonts），中文回退到苹方 / 微软雅黑。断网时仍然可用。
+- **配色**：深蓝、长春花蓝、信号绿与暖黄，视觉语言参考 [restaonline.it](https://www.restaonline.it/) 的明快蓝调；布局则压缩成一块适合每天扫一眼的紧凑仪表盘。
 - **兼容性**：面向现代浏览器（Chrome 117+、Safari 17+、Firefox 121+）。`color-mix()`、`:has()` 和 `@starting-style` 是渐进增强。
 - **本地数据键**：`projetract.v1`；Token 键：`projetract.token`。
 

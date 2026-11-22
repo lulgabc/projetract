@@ -198,6 +198,7 @@
     syncBtn: $("#syncBtn"),
     syncLabel: $("#syncLabel"),
     addBtn: $("#addBtn"),
+    heroAddBtn: $("#heroAddBtn"),
     settingsBtn: $("#settingsBtn"),
     themeBtn: $("#themeBtn"),
     banner: $("#banner"),
@@ -205,16 +206,18 @@
     bannerAction: $("#bannerAction"),
     bannerClose: $("#bannerClose"),
     eyebrowCount: $("#eyebrowCount"),
+    projectCount: $("#projectCount"),
     statPulling: $("#statPulling"),
     statCommits: $("#statCommits"),
     statActive: $("#statActive"),
     statParked: $("#statParked"),
-    gaugeTicks: $("#gaugeTicks"),
     gaugeNum: $("#gaugeNum"),
     gaugeCaption: $("#gaugeCaption"),
     gaugeMeta: $("#gaugeMeta"),
-    gaugeMini: $("#gaugeMini"),
+    scoreRing: $("#scoreRing"),
+    statusSummary: $("#statusSummary"),
     dataStamp: $("#dataStamp"),
+    heroStamp: $("#heroStamp"),
     seismoChart: $("#seismoChart"),
     notePeak: $("#notePeak"),
     notePeakSub: $("#notePeakSub"),
@@ -794,18 +797,18 @@
 
   function renderStamp() {
     const latest = latestFetchTime();
+    const stamp = latest ? `${fmtDate(latest)} ${fmtClock(latest)}` : "尚未同步";
     if (refs.dataStamp) {
-      refs.dataStamp.textContent = latest
-        ? `快照 ${fmtDate(latest)} ${fmtClock(latest)}`
-        : "尚未同步";
+      refs.dataStamp.textContent = latest ? `快照 ${stamp}` : "尚未同步";
     }
+    if (refs.heroStamp) refs.heroStamp.textContent = stamp;
     if (refs.dataSummary) {
-      refs.dataSummary.textContent = `${state.repos.length} 个项目 · 最后同步 ${
-        latest ? `${fmtDate(latest)} ${fmtClock(latest)}` : "—"
-      }`;
+      refs.dataSummary.textContent = `${state.repos.length} 个项目 · 最后同步 ${latest ? stamp : "—"}`;
     }
     if (refs.footerUser) refs.footerUser.textContent = `@${DEFAULT_USER}`;
-    if (refs.settingsUser) refs.settingsUser.textContent = `@${DEFAULT_USER}`;
+    $$("#settingsUser, #settingsUserBottom").forEach((node) => {
+      node.textContent = `@${DEFAULT_USER}`;
+    });
   }
 
   function renderRate() {
@@ -862,45 +865,61 @@
     const model = state.model;
     if (!model) return;
     if (refs.eyebrowCount) {
-      refs.eyebrowCount.textContent = model.items.length ? `${model.items.length} 个信号` : "等待第一个信号";
+      refs.eyebrowCount.textContent = model.items.length ? `${model.items.length} 个项目` : "等待第一个项目";
     }
-    if (refs.statPulling) refs.statPulling.textContent = pad2(model.pulling);
+    if (refs.projectCount) refs.projectCount.textContent = model.items.length;
+    if (refs.statPulling) refs.statPulling.textContent = model.pulling;
     if (refs.statCommits) refs.statCommits.textContent = fmtCount(model.commits28);
-    if (refs.statActive) refs.statActive.textContent = pad2(model.active7);
-    if (refs.statParked) refs.statParked.textContent = pad2(model.parking);
+    if (refs.statActive) refs.statActive.textContent = model.active7;
+    if (refs.statParked) refs.statParked.textContent = model.parking;
   }
 
   function renderGauge() {
     const model = state.model;
     if (!model) return;
-    const ticks = [];
-    const filled = Math.round((model.score / 100) * 40);
-    for (let i = 0; i < 40; i += 1) {
-      const angle = ((150 + (240 * i) / 39) * Math.PI) / 180;
-      const outer = 95;
-      const inner = i % 5 === 0 ? 79 : 85;
-      const x1 = (140 + Math.cos(angle) * outer).toFixed(2);
-      const y1 = (105 + Math.sin(angle) * outer).toFixed(2);
-      const x2 = (140 + Math.cos(angle) * inner).toFixed(2);
-      const y2 = (105 + Math.sin(angle) * inner).toFixed(2);
-      ticks.push(
-        `<line class="gauge-tick${i < filled ? " is-on" : ""}${i % 5 === 0 ? " is-major" : ""}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />`
-      );
-    }
-    if (refs.gaugeTicks) refs.gaugeTicks.innerHTML = ticks.join("");
-    if (refs.gaugeNum) refs.gaugeNum.textContent = model.items.length ? model.score : "—";
+    const score = model.items.length ? model.score : 0;
+    if (refs.scoreRing) refs.scoreRing.style.setProperty("--p", score);
+    if (refs.gaugeNum) refs.gaugeNum.textContent = model.items.length ? String(model.score) : "—";
+
+    const leader = model.items.slice().sort((a, b) => b.metrics.score - a.metrics.score)[0];
     if (refs.gaugeCaption) {
       refs.gaugeCaption.textContent = model.items.length
-        ? `${model.pulling} 个在牵引 · ${model.parking} 个停泊`
-        : "等待第一个信号";
+        ? `${model.pulling} 个正在牵引`
+        : "等待第一个项目";
     }
     if (refs.gaugeMeta) {
-      refs.gaugeMeta.textContent = model.items.length
-        ? `近 28 天 · ${fmtCount(model.commits28)} 次提交`
-        : "还没有提交可读";
+      refs.gaugeMeta.textContent = leader
+        ? `最强信号 · ${leader.repo.name} ${leader.metrics.score}`
+        : "接入一个项目，开始读取节奏";
     }
-    if (refs.gaugeMini) {
-      refs.gaugeMini.textContent = model.items.length ? `${model.active28} 个活跃日` : "—";
+
+    if (refs.statusSummary) {
+      if (!model.items.length) {
+        refs.statusSummary.innerHTML =
+          '<p class="empty-mini">还没有状态可读。接入项目后，这里会显示牵引、滑行、漂流和停泊的分布。</p>';
+      } else {
+        const definitions = [
+          ["pulling", "牵引"],
+          ["coasting", "滑行"],
+          ["drifting", "漂流"],
+          ["parked", "停泊"],
+        ];
+        const total = model.items.length;
+        const bar = definitions
+          .map(([key]) =>
+            model.statusCounts[key]
+              ? `<span class="status-seg is-${key}" style="width:${(model.statusCounts[key] / total) * 100}%"></span>`
+              : ""
+          )
+          .join("");
+        const legend = definitions
+          .map(
+            ([key, label]) =>
+              `<span class="status-legend-item"><i class="is-${key}"></i>${label} <b>${model.statusCounts[key]}</b></span>`
+          )
+          .join("");
+        refs.statusSummary.innerHTML = `<div class="status-bar">${bar}</div><div class="status-legend">${legend}</div>`;
+      }
     }
   }
 
@@ -1025,7 +1044,7 @@
       const textX = px + (anchor === "end" ? -8 : 8);
       peakMarkup = `
         <circle class="chart-peak-halo" cx="${px}" cy="${py}" r="9" />
-        <circle class="chart-dot" cx="${px}" cy="${py}" r="3.4" />
+        <circle class="chart-peak-dot" cx="${px}" cy="${py}" r="3.4" />
         <text class="chart-peak-text" x="${textX}" y="${Math.max(11, py - 11)}" text-anchor="${anchor}">${fmtShortDate(peak.date)} · ${peak.total}</text>
       `;
     }
@@ -1033,8 +1052,8 @@
     const lastIndex = series.length - 1;
     const todayMark = series[lastIndex]
       ? `
-        <circle class="chart-peak-halo" cx="${x(lastIndex)}" cy="${y(series[lastIndex].total)}" r="6" opacity=".55" />
-        <circle class="chart-dot" cx="${x(lastIndex)}" cy="${y(series[lastIndex].total)}" r="2.6" />
+        <circle class="chart-now-halo" cx="${x(lastIndex)}" cy="${y(series[lastIndex].total)}" r="6" />
+        <circle class="chart-now-dot" cx="${x(lastIndex)}" cy="${y(series[lastIndex].total)}" r="2.6" />
       `
       : "";
 
@@ -1100,10 +1119,10 @@
     const counts = state.model.statusCounts;
     const definitions = [
       { key: "all", label: "全部", color: "var(--ink)" },
-      { key: "pulling", label: STATUS.pulling.label, color: "var(--accent)" },
-      { key: "coasting", label: STATUS.coasting.label, color: "var(--olive)" },
+      { key: "pulling", label: STATUS.pulling.label, color: "var(--green)" },
+      { key: "coasting", label: STATUS.coasting.label, color: "var(--ink-2)" },
       { key: "drifting", label: STATUS.drifting.label, color: "var(--drift)" },
-      { key: "parked", label: STATUS.parked.label, color: "var(--park)" },
+      { key: "parked", label: STATUS.parked.label, color: "var(--parked)" },
     ];
     refs.filters.innerHTML = definitions
       .map(
@@ -1168,10 +1187,7 @@
   }
 
   function meterMarkup(score, className = "meter") {
-    const active = Math.round((score / 100) * 20);
-    return `<div class="${className}" aria-hidden="true">${Array.from({ length: 20 }, (_, index) =>
-      `<i class="${index < active ? "is-on" : ""}"></i>`
-    ).join("")}</div>`;
+    return `<div class="${className}" aria-hidden="true"><i style="width:${clamp(Number(score) || 0, 0, 100)}%"></i></div>`;
   }
 
   function cardMarkup(item, index) {
@@ -1180,12 +1196,11 @@
     const status = STATUS[metrics.status];
     const rank = state.model.rank.get(repo.full_name) || index + 1;
     const description = repo.description || "尚未写下描述。";
-    const streak = metrics.streak > 0 ? `连续 ${metrics.streak} 周` : "—";
     const visibility = repo.visibility === "private" ? `<span class="card-vis">PRIVATE</span>` : "";
     return `
       <article class="card is-${metrics.status}" style="--i:${index}">
         <div class="card-top">
-          <span class="card-rank">NO. ${pad2(rank)}</span>
+          <span class="card-rank">${pad2(rank)}</span>
           ${visibility}
           <span class="status-chip" title="${status.en}"><span class="status-dot" aria-hidden="true"></span>${status.label}</span>
         </div>
@@ -1198,16 +1213,16 @@
         <div class="card-viz">
           <div class="bars" aria-hidden="true">${barsMarkup(repo)}</div>
           <div class="score-block" aria-label="牵引力 ${metrics.score} 分">
-            <span class="score-big">${pad2(metrics.score)}</span>
+            <span class="score-big">${metrics.score}</span>
             <span class="score-label">TRACTION</span>
+            ${meterMarkup(metrics.score)}
           </div>
         </div>
-        ${meterMarkup(metrics.score)}
         <div class="card-foot">
           <span class="card-lang"><i class="lang-dot" style="background:${langColor(repo.language)}"></i>${esc(repo.language || "未标注")}</span>
-          <span class="card-meta"><span>${relTime(repo.pushed_at)}</span><span>${streak}</span></span>
+          <span class="card-meta"><span class="metric"><b>${fmtCount(metrics.recent)}</b> 次 / 28天</span><span>${relTime(repo.pushed_at)}</span></span>
         </div>
-        <button class="card-hit" type="button" data-open="${esc(repo.full_name)}" aria-label="查看 ${esc(repo.full_name)} 的信号详情"></button>
+        <button class="card-hit" type="button" data-open="${esc(repo.full_name)}" aria-label="查看 ${esc(repo.full_name)} 的项目详情"></button>
       </article>
     `;
   }
@@ -1220,13 +1235,13 @@
 
     if (!refs.emptyState) return;
     if (noRepos) {
-      refs.emptyTitle.textContent = "还没有信号";
+      refs.emptyTitle.textContent = "还没有项目";
       refs.emptyCopy.textContent = "接入一个 GitHub 仓库，开始记录它的牵引力。";
       refs.emptyAddBtn.textContent = "接入项目";
       refs.emptyResetBtn.hidden = false;
       refs.emptyResetBtn.textContent = "恢复预置项目";
     } else {
-      refs.emptyTitle.textContent = "没有匹配的信号";
+      refs.emptyTitle.textContent = "没有匹配的项目";
       refs.emptyCopy.textContent = "换一个关键词，或把筛选调回全部。它们可能只是暂时安静。";
       refs.emptyAddBtn.textContent = "清除筛选";
       refs.emptyResetBtn.hidden = true;
@@ -1448,12 +1463,12 @@
     state.settings.theme = theme === "night" ? "night" : "day";
     document.documentElement.dataset.theme = state.settings.theme;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", state.settings.theme === "night" ? "#12120e" : "#f1ede3");
+    if (meta) meta.setAttribute("content", state.settings.theme === "night" ? "#08142b" : "#f3f5fc");
     if (persist) saveState();
     if (refs.themeBtn) {
       refs.themeBtn.setAttribute(
         "aria-label",
-        state.settings.theme === "night" ? "切换到日间模式" : "切换到夜间模式"
+        state.settings.theme === "night" ? "切换到浅色模式" : "切换到深色模式"
       );
     }
     renderSettings();
@@ -2090,6 +2105,7 @@
 
   function bindEvents() {
     refs.addBtn.addEventListener("click", () => openAdd("single"));
+    refs.heroAddBtn?.addEventListener("click", () => openAdd("single"));
     refs.emptyAddBtn.addEventListener("click", () => {
       if (state.repos.length === 0) {
         openAdd("single");
