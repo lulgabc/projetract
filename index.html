@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="day">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projetract — 项目牵引力</title>
+  <meta name="description" content="一个安静的控制室，看见你的 GitHub 项目是否在动。不数星星，只看牵引力。" />
+  <meta name="theme-color" content="#f1ede3" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314140f'/%3E%3Cpath d='M10 34h10l5-13 7 26 6-17 4 8h12' fill='none' stroke='%23f1ede3' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='54' cy='38' r='4' fill='%23e5431d'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    // Apply the saved theme before first paint.
+    try {
+      const saved = JSON.parse(localStorage.getItem("projetract.v1") || "null");
+      if (saved && saved.settings && saved.settings.theme === "night") {
+        document.documentElement.dataset.theme = "night";
+      }
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="paper-grain" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M4 17h5.5l2.5-7 3.5 14 3-9 2 4H28" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="28" cy="19" r="2" fill="var(--accent)" />
+          </svg>
+        </span>
+        <span class="brand-copy">
+          <span class="brand-name">PROJETRACT</span>
+          <span class="brand-sub">项目牵引力 · SIGNAL ROOM</span>
+        </span>
+      </a>
+
+      <div class="topbar-side">
+        <span class="clock mono" id="clock" aria-label="当前时间">—</span>
+        <span class="topbar-rule" aria-hidden="true"></span>
+        <button class="icon-btn sync-btn" id="syncBtn" type="button" aria-label="同步全部项目" title="同步全部 (S)">
+          <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.34 5.66M20 5v6h-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="sync-text" id="syncLabel">同步</span>
+        </button>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="切换夜间模式" title="切换明暗">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="设置" title="设置">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h9M17 7h3M4 17h3M11 17h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            <circle cx="15" cy="7" r="2.4" stroke="currentColor" stroke-width="1.7" />
+            <circle cx="9" cy="17" r="2.4" stroke="currentColor" stroke-width="1.7" />
+          </svg>
+        </button>
+        <button class="btn btn-primary" id="addBtn" type="button" title="接入项目 (N)">
+          <span class="plus" aria-hidden="true">+</span>
+          <span class="btn-label">接入项目</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" role="status" hidden>
+    <span class="banner-dot" aria-hidden="true"></span>
+    <p id="bannerText"></p>
+    <button class="banner-action mono" id="bannerAction" type="button" hidden>去设置</button>
+    <button class="banner-close" id="bannerClose" type="button" aria-label="关闭提醒">×</button>
+  </div>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy reveal">
+        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> PORTFOLIO TRACTION <span class="eyebrow-sep">/</span> <span id="eyebrowCount">14 个信号</span></p>
+        <h1>把散落的项目，<br />连成一条<span class="pulse-word">脉搏</span>。</h1>
+        <p class="lede">不数星星，只看是否在动。这里是你的 GitHub 项目信号站——谁在推进，谁在休整，哪几天最用力，一眼看见。</p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <strong id="statPulling">—</strong>
+            <span>正在牵引</span>
+          </div>
+          <div class="hero-stat">
+            <strong id="statCommits">—</strong>
+            <span>近 28 天提交</span>
+          </div>
+          <div class="hero-stat">
+            <strong id="statActive">—</strong>
+            <span>近 7 天活跃</span>
+          </div>
+          <div class="hero-stat">
+            <strong id="statParked">—</strong>
+            <span>已停泊</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="gauge-panel reveal reveal-late" aria-label="组合牵引力">
+        <div class="gauge-head">
+          <span class="mono">PORTFOLIO PULSE</span>
+          <span class="gauge-status"><span class="led" aria-hidden="true"></span> 组合牵引力</span>
+        </div>
+        <div class="gauge-wrap">
+          <svg class="gauge" viewBox="0 0 280 176" aria-hidden="true">
+            <g id="gaugeTicks"></g>
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-num" id="gaugeNum">—</span>
+            <span class="gauge-outof">/ 100</span>
+            <span class="gauge-caption" id="gaugeCaption">正在读取信号</span>
+          </div>
+        </div>
+        <div class="gauge-foot">
+          <span id="gaugeMeta">—</span>
+          <span class="gauge-mini" id="gaugeMini" aria-hidden="true"></span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="seismo-shell shell reveal">
+      <div class="seismo">
+        <div class="sec-head">
+          <div>
+            <p class="eyebrow"><span class="index-mark">01</span> SEISMOGRAM</p>
+            <h2>组合脉搏</h2>
+            <p class="sec-sub">所有项目合并后的每日提交 · 最近 14 天</p>
+          </div>
+          <div class="seismo-meta">
+            <div class="legend">
+              <span class="legend-item"><i class="legend-line"></i> 每日提交</span>
+              <span class="legend-item"><i class="legend-dash"></i> 7 日均线</span>
+            </div>
+            <span class="mono snapshot-note" id="dataStamp">快照读取中…</span>
+          </div>
+        </div>
+        <div class="seismo-chart" id="seismoChart">
+          <div class="chart-tip" id="chartTip" hidden></div>
+        </div>
+        <div class="chart-notes">
+          <div class="chart-note">
+            <span class="mono">PEAK</span>
+            <strong id="notePeak">—</strong>
+            <span id="notePeakSub"></span>
+          </div>
+          <div class="chart-note">
+            <span class="mono">ACTIVE DAYS</span>
+            <strong id="noteActive">—</strong>
+            <span>有提交的日子</span>
+          </div>
+          <div class="chart-note">
+            <span class="mono">LAST SIGNAL</span>
+            <strong id="noteLast">—</strong>
+            <span id="noteLastSub"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="board shell reveal">
+      <div class="board-head">
+        <div class="board-title">
+          <p class="eyebrow"><span class="index-mark">02</span> SIGNAL INDEX</p>
+          <h2>项目信号</h2>
+          <p class="sec-sub" id="boardSub">按牵引力排序 · 点击卡片查看信号详情</p>
+        </div>
+        <div class="board-tools">
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.7" />
+              <path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <input id="searchInput" type="search" placeholder="搜索项目、语言、话题…" autocomplete="off" aria-label="搜索项目" />
+            <kbd>/</kbd>
+          </label>
+          <label class="sort-wrap">
+            <span class="sr-only">排序方式</span>
+            <select id="sortSelect" class="sort-select">
+              <option value="traction">牵引力</option>
+              <option value="recent">最近提交</option>
+              <option value="commits">近 28 天提交</option>
+              <option value="name">名称 A–Z</option>
+            </select>
+            <svg viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="m1 1.5 5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filters" id="filters" role="group" aria-label="按状态筛选"></div>
+        <span class="result-count mono" id="resultCount"></span>
+      </div>
+
+      <div class="grid" id="grid"></div>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <path d="M4 34h12l6-16 9 34 7-22 5 10h17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="60" cy="40" r="3" fill="var(--accent)" />
+          </svg>
+        </div>
+        <h3 id="emptyTitle">还没有信号</h3>
+        <p id="emptyCopy">接入一个 GitHub 仓库，开始记录它的牵引力。</p>
+        <div class="empty-actions">
+          <button class="btn btn-primary" id="emptyAddBtn" type="button">接入项目</button>
+          <button class="btn btn-ghost" id="emptyResetBtn" type="button">恢复预置项目</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer shell">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="brand-mark small" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M4 17h5.5l2.5-7 3.5 14 3-9 2 4H28" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="28" cy="19" r="2" fill="var(--accent)" />
+          </svg>
+        </span>
+        <span>
+          <strong>PROJETRACT</strong>
+          <small>不数星星，只看是否在动。</small>
+        </span>
+      </div>
+      <div class="footer-shortcuts mono">
+        <span><kbd>N</kbd> 接入</span>
+        <span><kbd>/</kbd> 搜索</span>
+        <span><kbd>S</kbd> 同步</span>
+        <span><kbd>ESC</kbd> 关闭</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Signal room for <span id="footerUser">@lulgabc</span> · data from the GitHub REST API · everything stays in this browser.</p>
+      <details class="formula">
+        <summary>牵引力如何计算？</summary>
+        <div class="formula-body">
+          <p><strong>牵引力（0–100）</strong> = 活动量 35% + 连续性 25% + 新鲜度 20% + 动量 20%。</p>
+          <ul>
+            <li><b>活动量</b> — 最近 4 周的提交密度。</li>
+            <li><b>连续性</b> — 最近 12 周里有多少周保持活跃。</li>
+            <li><b>新鲜度</b> — 距离最后一次提交多久，21 天为半衰期。</li>
+            <li><b>动量</b> — 最近 4 周相对前 4 周是加速还是减速。</li>
+          </ul>
+          <p class="formula-note">它是一个观察节奏的仪器，不是绩效评分。停泊并不意味着失败。</p>
+        </div>
+      </details>
+    </div>
+  </footer>
+
+  <!-- Detail drawer -->
+  <dialog id="detailDialog" class="drawer" aria-labelledby="detailTitle">
+    <div class="drawer-inner">
+      <div class="drawer-topbar">
+        <span class="mono">SIGNAL DETAIL</span>
+        <button class="icon-btn close-btn" type="button" data-close="detailDialog" aria-label="关闭详情">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+        </button>
+      </div>
+      <div class="drawer-body" id="detailBody"></div>
+    </div>
+  </dialog>
+
+  <!-- Add project modal -->
+  <dialog id="addDialog" class="modal add-modal" aria-labelledby="addTitle">
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">CONNECT <span class="eyebrow-sep">/</span> 接入</p>
+        <h2 id="addTitle">放进一个项目</h2>
+      </div>
+      <button class="icon-btn close-btn" type="button" data-close="addDialog" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+      </button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="接入方式">
+      <button class="tab is-active" id="tabSingleBtn" type="button" role="tab" aria-selected="true" data-tab="single">单个仓库</button>
+      <button class="tab" id="tabScanBtn" type="button" role="tab" aria-selected="false" data-tab="scan">扫描 GitHub</button>
+    </div>
+
+    <div class="tab-panel" id="singlePanel" role="tabpanel" aria-labelledby="tabSingleBtn">
+      <form id="singleForm" novalidate>
+        <label class="field-label" for="repoInput">仓库地址</label>
+        <input class="text-input" id="repoInput" name="repo" type="text" placeholder="owner/repo 或粘贴 GitHub 链接" autocomplete="off" spellcheck="false" />
+        <p class="hint">例如 <code>lulgabc/Mira</code>。公开仓库可直接接入；私有仓库请先在设置中填写 Token。</p>
+        <p class="form-error" id="singleError" role="alert"></p>
+        <button class="btn btn-primary wide" id="singleSubmit" type="submit">接入项目</button>
+      </form>
+      <div class="add-note">
+        <span class="led" aria-hidden="true"></span>
+        <span>直连 GitHub REST API。没有中间服务器，没有账号，没有追踪。</span>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="scanPanel" role="tabpanel" aria-labelledby="tabScanBtn" hidden>
+      <form id="scanForm" class="scan-form">
+        <label class="field-label" for="handleInput">GitHub 用户名</label>
+        <div class="input-row">
+          <span class="prefix">@</span>
+          <input class="text-input" id="handleInput" name="handle" type="text" placeholder="lulgabc" autocomplete="off" spellcheck="false" />
+          <button class="btn btn-ink" id="scanBtn" type="submit">扫描</button>
+        </div>
+        <p class="hint">扫描会列出此用户的公开仓库；添加 Token 后可包含自己的私有仓库。</p>
+      </form>
+      <div class="scan-results" id="scanResults" aria-live="polite">
+        <div class="scan-placeholder">输入用户名，看看哪些项目正在等待被看见。</div>
+      </div>
+      <div class="scan-foot">
+        <button class="text-btn" id="selectAllBtn" type="button" hidden>全选可见</button>
+        <button class="btn btn-primary" id="scanAddBtn" type="button" disabled>添加所选项目</button>
+      </div>
+    </div>
+
+    <div class="modal-foot mono">DIRECT TO GITHUB · NO MIDDLEMAN · TOKEN STAYS LOCAL</div>
+  </dialog>
+
+  <!-- Settings modal -->
+  <dialog id="settingsDialog" class="modal settings-modal" aria-labelledby="settingsTitle">
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">CONTROL ROOM <span class="eyebrow-sep">/</span> 设置</p>
+        <h2 id="settingsTitle">调校信号站</h2>
+      </div>
+      <button class="icon-btn close-btn" type="button" data-close="settingsDialog" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+      </button>
+    </div>
+
+    <div class="settings-body">
+      <section class="settings-section">
+        <div class="settings-head">
+          <h3>GitHub Token <span class="tag">可选</span></h3>
+          <p>把 API 配额从 60 次/小时提升到 5,000 次/小时，并读取你自己的私有仓库。</p>
+        </div>
+        <div class="token-status" id="tokenStatus">未连接 · 使用公开 API</div>
+        <div class="token-form">
+          <input class="text-input" id="tokenInput" type="password" placeholder="ghp_… / github_pat_…" autocomplete="off" spellcheck="false" aria-label="GitHub Token" />
+          <button class="btn btn-ink" id="tokenSaveBtn" type="button">保存</button>
+          <button class="btn btn-ghost" id="tokenClearBtn" type="button">清除</button>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="tokenRemember" />
+          <span>记住此令牌（仅保存在此浏览器）</span>
+        </label>
+        <p class="hint">Token 不会出现在任何网络请求之外，也不会写入项目文件。建议使用只含 <code>repo</code> 权限的 fine-grained token。<a href="https://github.com/settings/tokens" target="_blank" rel="noopener">去创建 →</a></p>
+        <p class="form-error" id="tokenError" role="alert"></p>
+      </section>
+
+      <section class="settings-section">
+        <div class="settings-head">
+          <h3>外观</h3>
+          <p>纸感适合白天，夜间模式适合把灯光调暗。</p>
+        </div>
+        <div class="theme-choice" id="themeChoice" role="group" aria-label="外观主题">
+          <button class="theme-card" data-theme-choice="day" type="button" aria-pressed="true">
+            <span class="theme-swatch day"></span>
+            <span>纸感日间</span>
+          </button>
+          <button class="theme-card" data-theme-choice="night" type="button" aria-pressed="false">
+            <span class="theme-swatch night"></span>
+            <span>夜间值守</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <div class="settings-head">
+          <h3>数据</h3>
+          <p>快照存在这台浏览器的 localStorage 里。换一台设备，就重新扫一次。</p>
+        </div>
+        <div class="data-line"><span id="dataSummary">—</span><span class="mono" id="rateStatus">API —</span></div>
+        <div class="settings-actions">
+          <button class="btn btn-ghost" id="settingsSyncBtn" type="button">同步全部</button>
+          <button class="btn btn-ghost" id="exportBtn" type="button">导出快照</button>
+          <button class="btn btn-ghost" id="restoreSeedBtn" type="button">恢复预置项目</button>
+        </div>
+      </section>
+
+      <section class="settings-section about-line">
+        <p>PROJETRACT · v1.0 · 为 <span id="settingsUser">@lulgabc</span> 建造。</p>
+        <p class="mono">NOT VANITY. TRACTION.</p>
+      </section>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="seed.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
