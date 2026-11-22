@@ -6,6 +6,8 @@
 
 一个安静的控制室，用来看见你的 GitHub 项目是否真的在动。不数星星，只看牵引力。
 
+**Live:** <https://lulgabc.github.io/projetract/>
+
 ![Projetract 界面预览](docs/preview.jpg)
 
 ## 它是什么
